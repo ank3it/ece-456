@@ -1,15 +1,20 @@
+-- Drop any existing tables if they exist
+DROP TABLE IF EXISTS Booking;
+DROP TABLE IF EXISTS Guest;
+DROP TABLE IF EXISTS Room;
 DROP TABLE IF EXISTS Hotel;
+
+-- Create new tables
 CREATE TABLE Hotel (
-    hotelID CHAR(4) PRIMARY KEY,
+    hotelID SERIAL PRIMARY KEY,
     hotelName VARCHAR(30),
     city CHAR(9) CONSTRAINT city_constraint CHECK (
         city IN ('Guelph', 'Kitchener', 'Waterloo')
     )
 );
 
-DROP TABLE IF EXISTS Room;
 CREATE TABLE Room (
-    hotelID CHAR(4),
+    hotelID INTEGER,
     roomNo CHAR(4),
     price NUMERIC(5, 2),
     type CHAR(6),
@@ -24,22 +29,20 @@ CREATE TABLE Room (
     )
 );
 
-DROP TABLE IF EXISTS Guest;
 CREATE TABLE Guest (
-    guestID CHAR(4) PRIMARY KEY,
+    guestID SERIAL PRIMARY KEY,
     guestName VARCHAR(30),
     guestAddress VARCHAR(50),
     guestAffiliation VARCHAR(30)
 );
 
-DROP TABLE IF EXISTS Booking;
 CREATE TABLE Booking (
-    hotelID CHAR(4),
+    bookingID SERIAL PRIMARY KEY,
+    hotelID INTEGER,
     roomNo CHAR(4),
-    guestID CHAR(4),
+    guestID INTEGER,
     startDate DATE,
     endDate DATE,
-    PRIMARY KEY (hotelID, roomNo, guestID, startDate),
     FOREIGN KEY (hotelID, roomNo)
         REFERENCES Room (hotelID, roomno)
         ON UPDATE RESTRICT
