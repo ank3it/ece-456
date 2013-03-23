@@ -9,7 +9,6 @@ import java.sql.SQLException;
  * 
  * @author Ankit Srivastava, Usman Khan
  */
-
 public class GuestRegistration {
 	private DatabaseManager dbManager;
 

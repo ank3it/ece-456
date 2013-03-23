@@ -2,8 +2,14 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
+/**
+ * PostgresDatabaseManager.java
+ * Concrete implementation of the DatabaseManager abstract class for PostgreSQL
+ * database.
+ * @author Ankit Srivastave, Usman Khan
+ */
 public class PostgresDatabaseManager extends DatabaseManager {
-	private static String JDBC_driver_class = "org.postgresql.Driver";
+	private static final String JDBC_driver_class = "org.postgresql.Driver";
 	private String url;
 	private String user;
 	private String password;

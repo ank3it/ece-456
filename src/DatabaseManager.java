@@ -1,6 +1,6 @@
 /**
  * DatabaseManager.java
- * Interface to make using different databases easier.
+ * Abstract class to make using different databases easier.
  * @author Ankit Srivastava, Usman Khan1
  */
 
