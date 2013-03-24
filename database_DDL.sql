@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS Booking;
 DROP TABLE IF EXISTS Guest;
 DROP TABLE IF EXISTS Room;
 DROP TABLE IF EXISTS Hotel;
+DROP TABLE IF EXISTS BillingLog;
 
 -- Create new tables
 CREATE TABLE Hotel (
@@ -52,3 +53,19 @@ CREATE TABLE Booking (
         ON UPDATE RESTRICT
         ON DELETE RESTRICT
 );
+
+CREATE TABLE BillingLog (
+    bookingID INTEGER,
+    hotelName VARCHAR(30),
+    city CHAR(9),
+    roomNo CHAR(4),
+    guestName VARCHAR(30),
+    guestAddress VARCHAR(50),
+    type CHAR(6),
+    price NUMERIC(5, 2),
+    startDate DATE,
+    endDate DATE,
+    numberOfDaysStayed INTEGER,
+    total NUMERIC(5, 2)
+);
+
