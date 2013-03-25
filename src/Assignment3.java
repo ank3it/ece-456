@@ -4,8 +4,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 
 /**
  * Contains all required queries.
@@ -39,8 +41,8 @@ public class Assignment3 {
 					"VALUES (?, ?, ?)");
 			
 			preparedStatement.setString(1, guestName);
-			preparedStatement.setString(2, guestName);
-			preparedStatement.setString(3, guestName);
+			preparedStatement.setString(2, guestAddress);
+			preparedStatement.setString(3, guestAffiliation);
 			
 			preparedStatement.executeUpdate();
 		} finally {
@@ -70,11 +72,13 @@ public class Assignment3 {
 					"UPDATE guest SET " +
 					"guestName = ?, " +
 					"guestAddress = ?, " +
-					"guestAffiliation = ?");
+					"guestAffiliation = ? " +
+					"WHERE guestID = ?");
 			
 			preparedStatement.setString(1, guestName);
 			preparedStatement.setString(2, guestAddress);
 			preparedStatement.setString(3, guestAffiliation);
+			preparedStatement.setInt(4, guestID);
 			
 			numUpdated = preparedStatement.executeUpdate();
 		} finally {
@@ -138,58 +142,55 @@ public class Assignment3 {
 		ResultSet resultSet = null;
 		List<Map<String, Object>> resultList = null;
 		
+		// List of conditions that make up the WHERE clause of query
+		List<String> clauseList = new ArrayList<String>();
+		
 		// Construct query
 		StringBuilder query = new StringBuilder("SELECT hotel.hotelID, ");
 		query.append("hotel.hotelName, hotel.city, room.roomNo, room.price, ");
 		query.append("room.type ");
 		query.append("FROM room ");
 		query.append("INNER JOIN hotel ON (hotel.hotelID = room.hotelID) ");
-		query.append("WHERE NOT EXISTS (SELECT * ");
-		query.append("FROM booking ");
-		query.append("WHERE booking.hotelID = hotel.hotelID ");
-		query.append("AND booking.roomNo = room.roomNo ");
 		
-		if (startDate != null && endDate != null) {
-			query.append("AND ((booking.startDate BETWEEN '");
-			query.append(startDate);
-			query.append("' AND '");
-			query.append(endDate);
-			query.append("' OR booking.endDate BETWEEN '");
-			query.append(startDate);
-			query.append("' AND '");
-			query.append(endDate);
-			query.append("') OR (");
-			query.append("booking.startDate <= '");
-			query.append(startDate);
-			query.append("' AND endDate >= '");
-			query.append(endDate);
-			query.append("')))");
-		} else {
-			query.append(") ");
-		}
+		if (!startDate.isEmpty() && !endDate.isEmpty()) {
+			StringBuilder subquery = new StringBuilder();
+			subquery.append("NOT EXISTS (SELECT * ");
+			subquery.append("FROM booking ");
+			subquery.append("WHERE booking.hotelID = hotel.hotelID ");
+			subquery.append("AND booking.roomNo = room.roomNo ");
+			subquery.append("AND ((booking.startDate BETWEEN '");
+			subquery.append(startDate);
+			subquery.append("' AND '");
+			subquery.append(endDate);
+			subquery.append("' OR booking.endDate BETWEEN '");
+			subquery.append(startDate);
+			subquery.append("' AND '");
+			subquery.append(endDate);
+			subquery.append("') OR (");
+			subquery.append("booking.startDate <= '");
+			subquery.append(startDate);
+			subquery.append("' AND endDate >= '");
+			subquery.append(endDate);
+			subquery.append("')))");
+			
+			clauseList.add(subquery.toString());
+		} 
 		
-		if (hotelName != null) {
-			query.append("AND hotel.hotelName = '");
-			query.append(hotelName);
-			query.append("' ");
-		}
+		if (!hotelName.isEmpty())
+			clauseList.add("hotel.hotelName = '" + hotelName + "'");
 		
-		if (city != null) {
-			query.append("AND hotel.city = '");
-			query.append(city);
-			query.append("' ");
-		}
+		if (!city.isEmpty())
+			clauseList.add("hotel.city = '" + city + "'");
 		
-		if (price != null) {
-			query.append("AND room.price = ");
-			query.append(price);
-			query.append(" ");
-		}
+		if (price != null)
+			clauseList.add("room.price = " + price);
 		
-		if (type != null) {
-			query.append("AND room.type = '");
-			query.append(type);
-			query.append("' ");
+		if (!type.isEmpty())
+			clauseList.add("room.type = '" + type + "'");
+		
+		if (clauseList.size() > 0) {
+			query.append("WHERE ");
+			query.append(Util.concatWithAnd(clauseList));
 		}
 		
 		try {
@@ -383,21 +384,112 @@ public class Assignment3 {
 		return resultList;
 	}
 	
-	public static void main(String[] args) {
+	public static void main(String[] args) throws SQLException {
 		DatabaseManager dm = new PostgresDatabaseManager(
 				"jdbc:postgresql://localhost/ece456", "usman", "bad_password");
-		
 		Assignment3 a3 = new Assignment3(dm);
-		List<Map<String, Object>> r;
+		Scanner in = new Scanner(System.in);
 		
-		try {
-			r = a3.getBill(1);
+		while (true) {
+			System.out.println("Available options:");
+			System.out.println("\t1. Add guest");
+			System.out.println("\t2. Update guest");
+			System.out.println("\t3. Delete guest");
+			System.out.println("\t4. Query bookings");
+			System.out.println("\t5. Add booking");
+			System.out.println("\t6. List arrivals");
+			System.out.println("\t7. List departures");
+			System.out.println("\t8. Print bill");
 			
-			for (Map<String, Object> row : r) {
-				System.out.println(row);
+			System.out.print("Choose an option: ");
+			String input = in.nextLine();
+			
+			if (input.equalsIgnoreCase("q")) {
+				break;
+			} else if (input.equalsIgnoreCase("1")) {
+				// Add guest
+				System.out.print("Guest name: ");
+				String guestName = in.nextLine();
+				System.out.print("Guest address: ");
+				String guestAddress = in.nextLine();
+				System.out.print("Guest affiliation: ");
+				String guestAffiliation = in.nextLine();
+				
+				a3.addGuest(guestName, guestAddress, guestAffiliation);
+			} else if (input.equalsIgnoreCase("2")) {
+				// Update guest
+				System.out.print("Guest ID: ");
+				int guestID = Integer.parseInt(in.nextLine());
+				System.out.print("Guest name: ");
+				String guestName = in.nextLine();
+				System.out.print("Guest address: ");
+				String guestAddress = in.nextLine();
+				System.out.print("Guest affiliation: ");
+				String guestAffiliation = in.nextLine();
+				
+				int result = a3.updateGuest(guestID, guestName, guestAddress, 
+						guestAffiliation);
+				
+				if (result > 0)
+					System.out.println("Update successful");
+				else
+					System.out.println("Update failed");
+			} else if (input.equalsIgnoreCase("3")) {
+				// Delete guest
+				System.out.print("Guest ID: ");
+				int guestID = Integer.parseInt(in.nextLine());
+				
+				int result = a3.deleteGuest(guestID);
+				
+				if (result > 0)
+					System.out.println("Delete successful");
+				else
+					System.out.println("Delete failed");
+			} else if (input.equalsIgnoreCase("4")) {
+				// Query bookings
+				System.out.print("Start date: ");
+				String startDate = in.nextLine();
+				System.out.print("End date: ");
+				String endDate = in.nextLine();
+				System.out.print("Hotel Name: ");
+				String hotelName = in.nextLine();
+				System.out.print("City: ");
+				String city = in.nextLine();
+				System.out.print("Price: ");
+				String priceString = in.nextLine();
+				Double price = priceString.isEmpty() ? 
+						null : Double.parseDouble(priceString);
+				System.out.print("Type: ");
+				String type = in.nextLine();
+				
+				List<Map<String, Object>> resultList = a3.getAvailableRooms(
+						startDate, endDate, hotelName, city, price, type);
+				
+				System.out.println("Booking query results: ");
+				Util.printResultList(resultList);
+			} else if (input.equalsIgnoreCase("5")) {
+				// Add booking
+			} else if (input.equalsIgnoreCase("6")) {
+				// List arrivals
+			} else if (input.equalsIgnoreCase("7")) {
+				// List departures
+			} else if (input.equalsIgnoreCase("8")) {
+				// Print bill
 			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
+		
+		in.close();
+		
+//		List<Map<String, Object>> r;
+//		
+//		try {
+//			r = a3.getBill(1);
+//			
+//			for (Map<String, Object> row : r) {
+//				System.out.println(row);
+//			}
+//		} catch (SQLException e) {
+//			e.printStackTrace();
+//		}
 	}
 }
