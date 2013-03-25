@@ -4,6 +4,7 @@ DROP TABLE IF EXISTS Guest;
 DROP TABLE IF EXISTS Room;
 DROP TABLE IF EXISTS Hotel;
 DROP TABLE IF EXISTS BillingLog;
+DROP TRIGGER IF EXISTS check_booking_conflicts ON Booking; DROP FUNCTION IF EXISTS raise_booking_exception;
 
 -- Create new tables
 CREATE TABLE Hotel (
@@ -66,6 +67,57 @@ CREATE TABLE BillingLog (
     startDate DATE,
     endDate DATE,
     numberOfDaysStayed INTEGER,
-    total NUMERIC(5, 2)
+    total NUMERIC(10, 2)
 );
 
+-- Function to call on INSERT/UPDATE which raises an exception if a booking
+-- conflict is found.
+CREATE OR REPLACE FUNCTION raise_booking_exception() RETURNS TRIGGER AS $$
+    BEGIN
+        IF TG_OP = 'INSERT'
+            AND (SELECT COUNT(*)
+                FROM booking
+                WHERE hotelid = NEW.hotelid
+                    AND roomno = NEW.roomno
+                    AND (
+                        (NEW.startdate >= startdate AND NEW.startdate < enddate)
+                        OR (NEW.enddate > startdate AND NEW.enddate <= enddate)
+                        OR (NEW.startdate < startdate AND NEW.enddate > enddate)
+                        OR (NEW.startdate = startdate AND NEW.enddate = enddate)
+                    )
+                ) = 0 THEN
+            RETURN NEW;
+        ELSIF TG_OP = 'UPDATE'
+            AND (SELECT COUNT(*)
+                FROM booking
+                WHERE hotelid = NEW.hotelid
+                    AND roomno = NEW.roomno
+                    AND (
+                        (NEW.startdate >= startdate AND NEW.startdate < enddate)
+                        OR (NEW.enddate > startdate AND NEW.enddate <= enddate)
+                        OR (NEW.startdate < startdate AND NEW.enddate > enddate)
+                        OR (NEW.startdate = startdate AND NEW.enddate = enddate)
+                    )
+                    -- Filter out the updated row itself
+                    AND NOT (
+                        hotelid = OLD.hotelid
+                        AND roomno = OLD.roomno
+                        AND guestid = OLD.guestid
+                        AND startdate = OLD.startdate
+                        AND enddate = OLD.enddate
+                    )
+                ) = 0 THEN
+            RETURN NEW;
+        ELSE
+            RAISE EXCEPTION USING
+                errcode = 'BADBK',
+                message = 'Conflict with existing booking';
+        END IF;
+    END;
+$$ LANGUAGE plpgsql;
+
+-- Insert/Update Trigger
+CREATE TRIGGER check_booking_conflicts
+    BEFORE INSERT OR UPDATE ON booking
+    FOR EACH ROW
+    EXECUTE PROCEDURE raise_booking_exception();

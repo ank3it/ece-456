@@ -2,7 +2,7 @@ import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -43,7 +43,8 @@ public class Util {
 		int numColumns = metaData.getColumnCount();
 		
 		while (rs.next()) {
-			HashMap<String, Object> row = new HashMap<String, Object>();
+			LinkedHashMap<String, Object> row = 
+					new LinkedHashMap<String, Object>();
 			
 			for (int i = 1; i <= numColumns; i++) {
 				row.put(metaData.getColumnLabel(i), rs.getObject(i));

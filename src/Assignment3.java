@@ -228,7 +228,7 @@ public class Assignment3 {
 		try {
 			connection = databaseManager.getConnection();
 			preparedStatement = connection.prepareStatement(
-					"INSERT INTO booking2 " +
+					"INSERT INTO booking " +
 					"(hotelID, roomNo, guestID, startDate, endDate) " +
 					"VALUES (?, ?, ?, ?, ?)",
 					PreparedStatement.RETURN_GENERATED_KEYS);
@@ -384,7 +384,7 @@ public class Assignment3 {
 		return resultList;
 	}
 	
-	public static void main(String[] args) throws SQLException {
+	public static void main(String[] args) {
 		DatabaseManager dm = new PostgresDatabaseManager(
 				"jdbc:postgresql://localhost/ece456", "usman", "bad_password");
 		Assignment3 a3 = new Assignment3(dm);
@@ -415,7 +415,11 @@ public class Assignment3 {
 				System.out.print("Guest affiliation: ");
 				String guestAffiliation = in.nextLine();
 				
-				a3.addGuest(guestName, guestAddress, guestAffiliation);
+				try {
+					a3.addGuest(guestName, guestAddress, guestAffiliation);
+				} catch (SQLException e) {
+					System.out.println("ERROR: Unable to complete operation");
+				}
 			} else if (input.equalsIgnoreCase("2")) {
 				// Update guest
 				System.out.print("Guest ID: ");
@@ -427,24 +431,35 @@ public class Assignment3 {
 				System.out.print("Guest affiliation: ");
 				String guestAffiliation = in.nextLine();
 				
-				int result = a3.updateGuest(guestID, guestName, guestAddress, 
-						guestAffiliation);
+				int result;
+				try {
+					result = a3.updateGuest(guestID, guestName, guestAddress, 
+							guestAffiliation);
+					
+					if (result > 0)
+						System.out.println("Update successful");
+					else
+						System.out.println("Update failed");
+				} catch (SQLException e) {
+					System.out.println("ERROR: Unable to complete operation");
+				}
 				
-				if (result > 0)
-					System.out.println("Update successful");
-				else
-					System.out.println("Update failed");
 			} else if (input.equalsIgnoreCase("3")) {
 				// Delete guest
 				System.out.print("Guest ID: ");
 				int guestID = Integer.parseInt(in.nextLine());
 				
-				int result = a3.deleteGuest(guestID);
-				
-				if (result > 0)
-					System.out.println("Delete successful");
-				else
-					System.out.println("Delete failed");
+				int result;
+				try {
+					result = a3.deleteGuest(guestID);
+					
+					if (result > 0)
+						System.out.println("Delete successful");
+					else
+						System.out.println("Delete failed");
+				} catch (SQLException e) {
+					System.out.println("ERROR: Unable to complete operation");
+				}
 			} else if (input.equalsIgnoreCase("4")) {
 				// Query bookings
 				System.out.print("Start date: ");
@@ -462,34 +477,88 @@ public class Assignment3 {
 				System.out.print("Type: ");
 				String type = in.nextLine();
 				
-				List<Map<String, Object>> resultList = a3.getAvailableRooms(
-						startDate, endDate, hotelName, city, price, type);
-				
-				System.out.println("Booking query results: ");
-				Util.printResultList(resultList);
+				List<Map<String, Object>> resultList;
+				try {
+					resultList = a3.getAvailableRooms(
+							startDate, endDate, hotelName, city, price, type);
+					
+					System.out.println("Booking query results: ");
+					Util.printResultList(resultList);
+				} catch (SQLException e) {
+					System.out.println("ERROR: Unable to complete operation");
+				}
 			} else if (input.equalsIgnoreCase("5")) {
 				// Add booking
+				System.out.print("Hotel ID: ");
+				int hotelID = Integer.parseInt(in.nextLine());
+				System.out.print("Room no.: ");
+				String roomNo = in.nextLine();
+				System.out.print("Guest ID: ");
+				int guestID = Integer.parseInt(in.nextLine());
+				System.out.print("Start date: ");
+				Date startDate = Date.valueOf(in.nextLine());
+				System.out.print("End date: ");
+				Date endDate = Date.valueOf(in.nextLine());
+				
+				int bookingID;
+				try {
+					bookingID = a3.addBooking(hotelID, roomNo, guestID,
+							startDate, endDate);
+					
+					System.out.println(
+							"Booking ID of new booking: " + bookingID);
+				} catch (SQLException e) {
+					System.out.println("ERROR: Unable to complete operation");
+				}
 			} else if (input.equalsIgnoreCase("6")) {
 				// List arrivals
+				System.out.print("Hotel ID: ");
+				int hotelID = Integer.parseInt(in.nextLine());
+				System.out.print("Date: ");
+				Date date = Date.valueOf(in.nextLine());
+				
+				List<Map<String, Object>> resultList;
+				try {
+					resultList = a3.getArrivals(hotelID, date);
+					
+					System.out.println("Arrivals:");
+					Util.printResultList(resultList);
+				} catch (SQLException e) {
+					System.out.println("ERROR: Unable to complete operation");
+				}
 			} else if (input.equalsIgnoreCase("7")) {
 				// List departures
+				System.out.print("Hotel ID: ");
+				int hotelID = Integer.parseInt(in.nextLine());
+				System.out.print("Date: ");
+				Date date = Date.valueOf(in.nextLine());
+				
+				List<Map<String, Object>> resultList;
+				try {
+					resultList = a3.getDepartures(hotelID, date);
+					
+					System.out.println("Departures:");
+					Util.printResultList(resultList);
+				} catch (SQLException e) {
+					System.out.println("ERROR: Unable to complete operation");
+				}
 			} else if (input.equalsIgnoreCase("8")) {
 				// Print bill
+				System.out.print("Booking ID: ");
+				int bookingID = Integer.parseInt(in.nextLine());
+				
+				List<Map<String, Object>> resultList;
+				try {
+					resultList = a3.getBill(bookingID);
+					
+					System.out.println("Bill:");
+					Util.printResultList(resultList);
+				} catch (SQLException e) {
+					System.out.println("ERROR: Unable to complete operation");
+				}
 			}
 		}
 		
 		in.close();
-		
-//		List<Map<String, Object>> r;
-//		
-//		try {
-//			r = a3.getBill(1);
-//			
-//			for (Map<String, Object> row : r) {
-//				System.out.println(row);
-//			}
-//		} catch (SQLException e) {
-//			e.printStackTrace();
-//		}
 	}
 }
