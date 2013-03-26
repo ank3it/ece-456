@@ -28,10 +28,11 @@ public class Assignment3 {
 	 * @param guestAffiliation A guest's affiliation.
 	 * @throws SQLException 
 	 */
-	public void addGuest(String guestName, String guestAddress, 
+	public int addGuest(String guestName, String guestAddress, 
 			String guestAffiliation) throws SQLException {
 		Connection connection = null;
 		PreparedStatement preparedStatement = null;
+		int numGuestsAdded = 0;
 		
 		try {
 			connection = databaseManager.getConnection();
@@ -44,11 +45,13 @@ public class Assignment3 {
 			preparedStatement.setString(2, guestAddress);
 			preparedStatement.setString(3, guestAffiliation);
 			
-			preparedStatement.executeUpdate();
+			numGuestsAdded = preparedStatement.executeUpdate();
 		} finally {
 			databaseManager.closeQuietly(preparedStatement);
 			databaseManager.closeQuietly(connection);
 		}
+		
+		return numGuestsAdded;
 	}
 	
 	/**
@@ -254,7 +257,7 @@ public class Assignment3 {
 		return newBookingID;
 	}
 	
-	// ----- Module 3: Booking Registration -----
+	// ----- Module 4: Room Maintenance and Billing  -----
 	/**
 	 * Returns a list of arrivals for the given date.
 	 * @param hotelID The ID of the hotel.
@@ -272,8 +275,8 @@ public class Assignment3 {
 		try {
 			connection = databaseManager.getConnection();
 			preparedStatement = connection.prepareStatement(
-					"SELECT guest.guestID, hotel.hotelID, hotel.hotelName, " +
-					"booking.roomNo, guest.guestName " +
+					"SELECT booking.bookingID, guest.guestID, " +
+					"hotel.hotelName, booking.roomNo, guest.guestName " +
 					"FROM booking " +
 					"INNER JOIN hotel ON hotel.hotelID = booking.hotelID " +
 					"INNER JOIN guest on guest.guestID = booking.guestID " +
@@ -309,8 +312,8 @@ public class Assignment3 {
 		try {
 			connection = databaseManager.getConnection();
 			preparedStatement = connection.prepareStatement(
-					"SELECT guest.guestID, hotel.hotelID, hotel.hotelName, " +
-					"booking.roomNo, guest.guestName " +
+					"SELECT booking.bookingID, guest.guestID, " +
+					"hotel.hotelName, booking.roomNo, guest.guestName " +
 					"FROM booking " +
 					"INNER JOIN hotel ON hotel.hotelID = booking.hotelID " +
 					"INNER JOIN guest on guest.guestID = booking.guestID " +
@@ -416,7 +419,13 @@ public class Assignment3 {
 				String guestAffiliation = in.nextLine();
 				
 				try {
-					a3.addGuest(guestName, guestAddress, guestAffiliation);
+					int result = a3.addGuest(guestName, guestAddress, 
+							guestAffiliation);
+					
+					if (result > 0)
+						System.out.println("Add successful");
+					else
+						System.out.println("Add failed");
 				} catch (SQLException e) {
 					System.out.println("ERROR: Unable to complete operation");
 				}

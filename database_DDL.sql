@@ -4,7 +4,8 @@ DROP TABLE IF EXISTS Guest;
 DROP TABLE IF EXISTS Room;
 DROP TABLE IF EXISTS Hotel;
 DROP TABLE IF EXISTS BillingLog;
-DROP TRIGGER IF EXISTS check_booking_conflicts ON Booking; DROP FUNCTION IF EXISTS raise_booking_exception;
+DROP TRIGGER IF EXISTS check_booking_conflicts ON Booking;
+DROP FUNCTION IF EXISTS raise_booking_exception;
 
 -- Create new tables
 CREATE TABLE Hotel (
